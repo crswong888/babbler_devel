@@ -18,7 +18,7 @@ function copyfile {
 }
 
 # copy files from source to Babbler
-echo "Copying files tracked by Git from '$srcname' to 'babbler'..."
+echo -n "Copying files tracked by Git from '$srcname' to 'babbler'... "
 for file in `git ls-files $srcname`
 do
   dst="babbler/${file#$srcname}"

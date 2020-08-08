@@ -69,7 +69,7 @@ function gitstatus {
   return $status
 }
 
-echo "Copying files tracked by Git from '$srcname' to '$dstname'..."
+echo -n "Copying files tracked by Git from '$srcname' to '$dstname'... "
 for file in `git ls-files $srcname`
 do
   dst=$dstname${file#$srcname}
@@ -82,9 +82,9 @@ do
 done
 echo "Done."
 
-echo "Copying files not tracked by Git, except those which match a '.gitignore' pattern..."
+echo -n "Copying files not tracked by Git, except those which match a '.gitignore' pattern... "
 if [ ! -f "$srcname.gitignore" ]; then
-  echo "File '$srcname.gitignore' not found. Skipping untracked files."
+  echo -e "\nFile '$srcname.gitignore' not found. Skipping untracked files."
 else
   for file in `find $srcname`
   do
@@ -95,6 +95,5 @@ else
 fi
 echo "Done."
 
-echo "Checking git status:"
-echo ""
+echo -e "Checking git status:\n"
 git status

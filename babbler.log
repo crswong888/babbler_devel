@@ -1,0 +1,24 @@
+# directories in babbler_devel/ will be translated into commits with the messages provided here
+#
+# the name of the directory <dir> must be enclosed in square brackets "[<dir>]"
+#
+# the reader will interpret all lines that follow "[<dir>]" as a commit message until it encounters
+# the empty bracket closer "[]"
+#
+# commits may be multiple lines and leading/trailing white space is ignored
+
+[step01_moose_app]
+  Initial files
+[]
+
+[step02_input_file]
+  created an input file to solve diffusion problem
+[]
+
+[step05_kernel_object]
+  Created kernel to solve Darcy pressure and updated the problem input file
+[]
+
+[step06_input_params]
+  Made "permeability" and "viscosity" validParams objects and specified required value in input file
+[]
