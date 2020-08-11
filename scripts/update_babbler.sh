@@ -69,7 +69,7 @@ function copyfile {
 
 # stash any untracked changes to files in any of the step* directories
 stashed=false
-if [ -n "`git status -s step*`" ]; then
+if [ -n "`git diff --name-only step*`" ]; then
   git stash push -- step*
   stashed=true
 fi
