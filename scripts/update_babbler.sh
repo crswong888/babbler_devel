@@ -8,6 +8,29 @@ shopt -s extglob
 # and the current working directory should be the babbler_devel repo parent dir with git initialized
 #    - check for .git folder or something idk
 
+# perhaps I shoudld include some option here to only stage commits following a certain point in the
+# history, e.g., HEAD~2, step05_kernel_object, and so on, but don't modify step01 or step02...
+#
+# compiling and testing following each commit should be optional, --run-tests
+#
+# creating tags should be optional, -t or --tags
+#
+# pushing to remote babbler should be optional, -p or --push
+#   - this also specifies wether tags are pushed too when -t or --tags
+#
+# perhaps the remote branch should be optional, "some_branch" instead of current default, "devel"
+#   - except this might make things messy - no need to create all kinnds of branches of babbler
+
+# check connection to remote repository
+echo -n "Checking connection to remote '`cd babbler/ && git ls-remote --get-url`'... "
+cd babbler/ && git ls-remote &> /dev/null && cd ../
+if [ ! $? -eq 0 ]; then
+  echo -e "\nError: Could not establish connection to remote '`git ls-remote --get-url`'."
+  exit 1
+fi
+echo "Done."
+
+# Function for reading a commit message for a specified directory from 'babbler.log'
 function commitmsg {
   # babbler.log must exist
   # TODO: how to parse case of multiple commits per step
@@ -35,6 +58,15 @@ function commitmsg {
   done < babbler.log
 }
 
+# Function for copying file to a specified destination
+function copyfile {
+  dstpath="$(dirname $2)"
+  if [ ! -d $dstpath ]; then
+    mkdir -p $dstpath
+  fi
+  cp -p $1 $2
+}
+
 # clean up babbler submodule
 git submodule deinit babbler/ -f
 git submodule update --init babbler/
@@ -49,10 +81,6 @@ git checkout devel # if devel not found, git checkout -b devel origin/devel, if 
 git reset --hard origin/devel
 git clean -xdf &> /dev/null
 
-# */ we need a separate set of tags that are intended for the devel branch only
-# */ and we should only delete those at origin
-# git push origin --delete $(git tag -l)
-
 # clear all local and remote tags with "devel" suffix
 for tag in `git tag -l`
 do
@@ -63,6 +91,9 @@ do
 done
 
 # create a temporary orphan branch and clear the directory - preserve the .git, of course
+if [ -n "`git show-ref refs/heads/temp`" ]; then
+  git branch -D temp
+fi
 git checkout --orphan temp
 rm -rfv !(.git|.|..) &> /dev/null
 git add --all
@@ -72,7 +103,7 @@ echo "Removed all files on branch 'temp'"
 # ----------------------------------------------------------------------
 
 # what if no steps are found
-# what if step* is found bout its not in the format stepXX, e.g., step1
+# what if a step* is not in the format stepXX, e.g., 'step1_' - this would cause sorting problems
 # what if no commit message is returned?
 
 for file in ../step*
@@ -82,11 +113,20 @@ do
   cd ../
   srcname=$(basename $file)
   msg=`commitmsg $srcname`
-  ./scripts/copy_to_babbler.sh "$srcname"
+
+  # copy files from source to Babbler
+  echo -n "Copying files tracked by Git from '$srcname' to 'babbler'... "
+  for gitfile in `git ls-files $srcname`
+  do
+    dst="babbler/${gitfile#$srcname}"
+    copyfile $gitfile $dst
+  done
+  echo "Done."
 
   # compile and test the application - we need to ensure that every step works
   #
-  # okay... what do I do here if compilation or testing fails. How do i even determine failure from shell?
+  # okay... what do I do here if compilation or testing fails. How do i even determine failure from
+  # shell? Does it have a non-zero exit status?
   echo "Entering directory: 'babbler/'"
   cd babbler/
   make clean
@@ -114,6 +154,7 @@ echo -e "Checking git log:\n"
 git log
 git push -u -f origin devel
 
+# push new tags to remote
 echo -e "Checking git tag:\n"
 git tag
 git push origin *_devel
@@ -125,5 +166,11 @@ git add babbler
 echo -e "Checking git status:\n"
 git status
 
-# quick message about checking babbler/devel on github
-# quick message about pushing the submodule update for this repo
+# messages to follow succesful update
+echo "Babbler update complete."
+echo -n "Changes pushed to branch '`cd babbler/ && git symbolic-ref --short HEAD`' of "
+echo "'`cd babbler/ && git ls-remote --get-url`'."
+echo "View repository at https://github.com/idaholab/babbler/tree/devel."
+echo ""
+echo "'babbler' submodule checked out at `cd babbler/ && git rev-parse HEAD`."
+echo "Commit and push 'babbler' submodule update to `git ls-remote --get-url` when ready."

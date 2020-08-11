@@ -1,9 +1,9 @@
 # directories in babbler_devel/ will be translated into commits with the messages provided here
 #
-# the name of the directory <dir> must be enclosed in square brackets "[<dir>]"
+# the name of the directory <dir> must be enclosed in square brackets, e.g., "[<dir>]"
 #
 # the reader will interpret all lines that follow "[<dir>]" as a commit message until it encounters
-# the empty bracket closer "[]"
+# the empty bracket "[]"
 #
 # commits may be multiple lines and leading/trailing white space is ignored
 
