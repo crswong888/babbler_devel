@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# should be able to specify a specific file in $1 to rebase to all forward commits
-
 # remove forward slash from directory name if provided
 srcname="${1%/}"
 

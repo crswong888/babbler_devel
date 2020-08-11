@@ -67,6 +67,13 @@ function copyfile {
   cp -p $1 $2
 }
 
+# stash any untracked changes to files in any of the step* directories
+stashed=false
+if [ -n "`git status -s step*`" ]; then
+  git stash push -- step*
+  stashed=true
+fi
+
 # clean up babbler submodule
 git submodule deinit babbler/ -f
 git submodule update --init babbler/
@@ -159,10 +166,16 @@ echo -e "Checking git tag:\n"
 git tag
 git push origin *_devel
 
-# stage updates to babbler submodule
+# pop stash and stage submodule update
 echo "Leaving directory: 'babbler/'"
 cd ../
-git add babbler
+if $stashed; then
+  git stash apply --quiet
+  git stash drop stash@{0}
+fi
+
+# stage submodule update and report final git status
+git add -v babbler
 echo -e "Checking git status:\n"
 git status
 
