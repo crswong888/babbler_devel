@@ -1,40 +1,44 @@
 #!/bin/bash
 
 function printusage {
-    echo "Usage:    ./scripts/new_commit.sh <source> <destination> <options>"
+    echo "Usage:    ./scripts/copy_to_moose.sh <source> <options>"
     echo ""
-    echo "    Creates a folder in the current working directory to represent a new Babbler commit. "
-    echo "    Any unstaged changes in <destination> should be staged before running this script."
+    echo "    Creates a folder in '../moose/tutorials/tutorial01_app_development/' to represent a "
+    echo "    new Babbler commit. This script must be ran from 'babbler_devel/'. Any unstaged "
+    echo "    changes in '../moose/tutorials/tutorial01_app_development/<source>' should be staged "
+    echo "    before running this script."
     echo ""
     echo "    <source> The name of the source directory to copy."
-    echo ""
-    echo "    <destination> The name of the new folder to begin staging changes off of."
     echo ""
     echo "    <options> Non-positional arguments supplied after <source> <destination>:"
     echo ""
     echo "              -f, --force "
-    echo "                  The <destination> folder will be overwritten if it already exists."
+    echo "                  The '../moose/tutorials/tutorial01_app_development/<source>' folder "
+    echo "                  will be overwritten if it already exists."
     echo ""
     echo "              -a, --add "
     echo "                  Add git tracking to newly created files. Modified files are skipped."
     echo ""
 }
 
-if [[ "$1" == "-h" || "$1" == "--help" || $# == 0 || $# > 4 ]]; then
+if [[ "$1" == "-h" || "$1" == "--help" || $# == 0 || $# > 3 ]]; then
     printusage
     exit 1
 fi
 
-# Add forward slash to directory names if not provided
+# Modify paths and add forward slash to directory names if not provided
+echo "Entering directory: '../moose/'"
+cd ../moose/
 srcname="${1%/}/"
-dstname="${2%/}/"
+srcdir="../babbler_devel/"
+dstname="tutorials/tutorial01_app_development/${1%/}/"
 
-if [ ! -d $srcname ]; then
-  echo "Error: Directory $srcname does not exist."
+if [ ! -d $srcdir$srcname ]; then
+  echo "Error: Directory $srcdir$srcname does not exist."
   exit 1
 fi
 
-if [ -d $dstname ] && ! [[ "$3" == "-f" || "$3" == "--force" || "$4" == "-f" || "$4" == "--force" ]]; then
+if [ -d $dstname ] && ! [[ "$2" == "-f" || "$2" == "--force" || "$3" == "-f" || "$3" == "--force" ]]; then
   echo "Error: Directory '$dstname' already exists. Use '-f' to overwrite existing files."
   exit 1
 elif [ ! -d $dstname ]; then
@@ -70,19 +74,21 @@ function gitstatus {
   return $status
 }
 
-echo -n "Copying files tracked by Git from '$srcname' to '$dstname'... "
-for file in `git ls-files $srcname`
+echo -n "Copying files tracked by Git from '$srcdir$srcname' to '$dstname'... "
+for file in `cd $srcdir && git ls-files $srcname`
 do
   dst=$dstname${file#$srcname}
-  copyfile $file $dst
+  copyfile $srcdir$file $dst
 
   # only add new untracked files to preserve any previously staged changes
-  if [[ "$3" == "-a" || "$3" == "--add" || "$4" == "-a" || "$4" == "--add" ]] && ! gitstatus $dst $dstname; then
+  if [[ "$2" == "-a" || "$2" == "--add" || "$3" == "-a" || "$3" == "--add" ]] && ! gitstatus $dst $dstname; then
     git add $dst
   fi
 done
 echo "Done."
 
+echo "Leaving directory: 'moose/'"
+cd ../babbler_devel
 echo -n "Copying files not tracked by Git, except those which match a '.gitignore' pattern... "
 if [ ! -f "$srcname.gitignore" ]; then
   echo -e "\nFile '$srcname.gitignore' not found. Skipping untracked files."
@@ -90,11 +96,11 @@ else
   for file in `find $srcname`
   do
     if ! gitstatus $file $srcname && [ -z "`git check-ignore $file`" ]; then
-      copyfile $file $dstname${file#$srcname}
+      copyfile $file "../moose/$dstname${file#$srcname}"
     fi
   done
 fi
 echo "Done."
 
-echo -e "Checking git status:\n"
-git status
+echo -e "Checking git status in '../moose/':\n"
+cd ../moose/ && git status

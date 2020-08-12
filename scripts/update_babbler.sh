@@ -68,6 +68,8 @@ function copyfile {
 }
 
 # stash any untracked changes to files in any of the step* directories
+#
+# git diff will error if the the <path> doesn't exist - need to verify that the exit code is 0 too
 stashed=false
 if [ -n "`git diff --name-only step*`" ]; then
   git stash push -- step*
