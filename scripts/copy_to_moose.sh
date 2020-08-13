@@ -10,7 +10,7 @@ function printusage {
     echo ""
     echo "    <source> The name of the source directory to copy."
     echo ""
-    echo "    <options> Non-positional arguments supplied after <source> <destination>:"
+    echo "    <options> Non-positional arguments supplied after <source>:"
     echo ""
     echo "              -f, --force "
     echo "                  The '../moose/tutorials/tutorial01_app_development/<source>' folder "
@@ -74,18 +74,6 @@ function gitstatus {
   return $status
 }
 
-# stash any untracked changes to files in any of the step* directories
-#
-# git diff will error if the the <path> doesn't exist - need to verify that the exit code is 0 too
-#
-# this isn't gonna work
-#
-# stashed=false
-# if [ -n "`git diff --name-only $dstname*`" ]; then
-#   git stash push -- $dstname*
-#   stashed=true
-# fi
-
 echo -n "Copying files tracked by Git from '$srcdir$srcname' to '$dstname'... "
 for file in `cd $srcdir && git ls-files $srcname`
 do
@@ -114,10 +102,5 @@ else
 fi
 echo "Done."
 
-# pop stash and report git status
-# if $stashed; then
-#   git stash apply --quiet
-#   git stash drop stash@{0}
-# fi
 echo -e "Checking git status in '../moose/':\n"
 cd ../moose/ && git status
