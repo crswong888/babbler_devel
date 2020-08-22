@@ -1,29 +1,32 @@
 #!/bin/bash
 
-# warning, this will unstage any staged changes to $1
+# This script uses a diff at a specific head to select which lines to copy to the file in the
+# subsequent commit directories. If no sha is specified, it assumes HEAD for comparing diffs
 
 # remove forward slash from source directory name if provided
 srcdir="${1%/}"
 
-function stash {
-  git stash push -- $1*
-}
-
-git reset HEAD $srcdir* --quiet
-modified=$(git diff --name-only $srcdir)
-# if [ -n $modified ]; then
-#
-# fi
-# else, no staged or unstaged changes found, aborting
-
-if [ -f "tmp" ]; then
-  rm tmp
+# determine sha to use for compaing file diffs
+sha=$2
+if [ -z $sha ]; then
+  sha="HEAD"
 fi
 
+if [ "$(git cat-file -t $sha)" != "commit" ]; then
+  echo "Error: $sha is not a valid commit."
+  exit 1
+fi
+
+# '/tmp/dstfile' will temporarily store file updates before merging - be sure one isn't lingering
+if [ -f "/tmp/dstfile" ]; then
+  rm /tmp/dstfile
+fi
+
+ifs=$IFS # store default internal field separator so we can switch back and forth
 for dstdir in step*
 do
   if [ ${dstdir:4:2} -gt ${srcdir:4:2} ]; then
-    for srcfile in $modified
+    for srcfile in $(git ls-files $srcdir)
     do
       # Find the destination file if it exists
       dstfile=$dstdir${srcfile#$srcdir}
@@ -32,101 +35,84 @@ do
         continue
       fi
 
-      # Stash and get retro diff
-      git stash push -- $srcfile*
-      diff=$(diff $srcfile $dstfile | grep '^[1-9]') # pipe to grep to and only output diff codes
+      #
+      git show $sha:$srcfile > /tmp/srcfile
+      diff=$(diff /tmp/srcfile $dstfile | grep '^[1-9]') # pipe to grep to and only output diff codes
+      rm /tmp/srcfile
 
-      echo "$diff"
+      # temporary
+      if [ -z "$diff" ]; then
+        continue
+      fi
+      # not this ^^^^^
+      # this:
+      #
+      # if [ -n $diff ]; then
+      #   execute the function
+      # fi
 
-      # split and read into an array
-      # for d in $diff
-      # do
-      #   # ifs=$IFS
-      #   # IFS=","
-      #   read -r -a diffarray <<< "$diff"
-      #   # IFS=$ifs
-      #   echo ${diffarray[0]}
-      # done
-
-      # split by each char
-      # for d in $diff
-      # do
-      #   for char in $(echo "$d" | sed 's/\(.\)/\1\n/g')
-      #   do
-      #     echo $char
-      #   done
-      # done
-
-      # pop stash
-      git stash apply --quiet
-      git stash drop stash@{0}
+      ######################
+      # all of the rest of this can be passed to a function which takes $diff, $srcfile and $dstfile
+      # the function should just remove tmp, its hardly slower and much more secure
 
       # copy only those lines which don't match the retro diff
-      ifs=$IFS # store default internal field separator so we can switch back and forth
-      j=$((1)) # current line index in dstfile
       for i in $(seq 1 $(wc -l < $srcfile))
       do
         difftype="None"
         for d in $diff
         do
           # read lower and upper diff line indices (x,x[a|c|d]x,x) from each file into an array
-          IFS="acd"
+          IFS="acd" # split string by a, c, or d
           read -r -a lines <<< $d
-          IFS=","
+          IFS="," # split strings by commas
           read -r -a srclines <<< ${lines[0]}
           read -r -a dstlines <<< ${lines[1]}
           IFS=$ifs # restore default IFS
 
-          # store lower and upper line indices to determine how it should be copied - if at all
+          # store lower and upper line diff indices for $srcfile
           srclower=${srclines[0]}
           srcupper=${srclines[1]}
           if [ -z $srcupper ]; then
             srcupper=$srclower
           fi
 
+          # lower and upper diff indices for $dstfile
           dstlower=${dstlines[0]}
           dstupper=${dstlines[1]}
           if [ -z $dstupper ]; then
             dstupper=$dstlower
           fi
 
-          # determine if current line matches a diff index
+          # determine if current line matches a diff index - get the type of diff if it is
           if [ $i -ge $srclower ] && [ $i -le $srcupper ]; then
-            difftype=$(echo $d | sed 's/[^acd]*//g') # pipe type char (add, change, del) to sed
+            difftype=$(echo $d | sed 's/[^acd]*//g') # pipe char to sed - (a)dd, (c)hange, (d)elete
             break
           fi
         done
 
-        echo "Before:"
-        echo $j
-        echo $(($(wc -l < tmp) + 1))
-
         #
+        touch /tmp/dstfile
         if [ $difftype = "None" ]; then
-          sed -n "$i"p $srcfile >> tmp
-          #j=$((j + 1))
+          sed -n "$i"p $srcfile >> /tmp/dstfile
         elif [ $difftype = "a" ]; then
-          sed -n "$i"p $srcfile >> tmp
-          #j=$((j + 1))
+          sed -n "$i"p $srcfile >> /tmp/dstfile
           for range in $(seq $dstlower $dstupper)
           do
-            sed -n "$(($(wc -l < tmp) + 1))"p $dstfile >> tmp
-            #j=$((j + 1))
+            sed -n "$(($(wc -l < /tmp/dstfile) + 1))"p $dstfile >> /tmp/dstfile
           done
         elif [ $difftype = "c" ] && [ $i = $srcupper ]; then
           for range in $(seq $dstlower $dstupper)
           do
-            sed -n "$(($(wc -l < tmp) + 1))"p $dstfile >> tmp
-            #j=$((j + 1))
+            sed -n "$(($(wc -l < /tmp/dstfile) + 1))"p $dstfile >> /tmp/dstfile
           done
         fi
-
       done
+
+      # overwrite $dstfile with the temporary merger file
+      mv /tmp/dstfile $dstfile
     done
-
-    # this is temporary!!!!
-    mv tmp tmptmp
-    exit 1
-
   fi
 done
+
+echo -e "Checking git status:\n"
+git status
