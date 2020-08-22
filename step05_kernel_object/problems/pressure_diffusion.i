@@ -22,7 +22,7 @@
 [Kernels]
   [diffusion]
     type = DarcyPressure # zero-gravity, divergence-free form of Darcy's law
-    variable = pressure # Operate on the "pressure" variable from above
+    variable = pressure  # Operate on the "pressure" variable from above
   []
 []
 
