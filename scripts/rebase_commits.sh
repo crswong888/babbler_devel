@@ -117,7 +117,7 @@ do
 
       # Write a temporary file containing the contents of $srcfile at $sha and output a `diff`
       git show $sha:$srcfile > /tmp/srcfile
-      diff=$(diff /tmp/srcfile $dstfile | grep '^[1-9]') # pipe to grep to and only output diff codes
+      diff=$(diff /tmp/srcfile $dstfile | grep '^[1-9]') # pipe to grep to and only output diff code
       rm /tmp/srcfile
 
       # Invoke function to copy lines from $srcfile to $dstfile which don't match $diff

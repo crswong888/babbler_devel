@@ -90,11 +90,10 @@ git checkout devel # if devel not found, git checkout -b devel origin/devel, if 
 git reset --hard origin/devel
 git clean -xdf &> /dev/null
 
-# clear all local and remote tags with "devel" suffix
-for tag in `git tag -l`
+# clear all local tags with "devel" suffix
+for tag in $(git tag -l)
 do
   if [ ${tag#step??_} == "devel" ]; then
-    git push origin --delete $tag
     git tag -d $tag
   fi
 done
@@ -115,6 +114,7 @@ echo "Removed all files on branch 'temp'"
 # what if a step* is not in the format stepXX, e.g., 'step1_' - this would cause sorting problems
 # what if no commit message is returned?
 
+failed=false # initialize variable to track wether compilation, testing, etc., of babbler failed
 for file in ../step*
 do
   # read commit message and copy files from commit directory to babbler
@@ -132,60 +132,110 @@ do
   done
   echo "Done."
 
-  # compile and test the application - we need to ensure that every step works
-  #
-  # okay... what do I do here if compilation or testing fails. How do i even determine failure from
-  # shell? Does it have a non-zero exit status?
+  # stage and commit files
   echo "Entering directory: 'babbler/'"
   cd babbler/
-  make clean
-  make -j4 # make the -j4 optional input
-  ./run_tests -j4
-
-  # stage and commit files
   git add --all
   git commit -m "$msg"
 
   # the tags with the `devel` suffix eventually overwrite tags which refer to master branch commits
   git tag "${srcname:0:6}_devel"
 
+  # compile application, run tests and all input files - we need to ensure that every step works
+  echo -n "Compiling Babbler... "
+  make clean &> /tmp/babbler_devel_out
+  make -j4 &> /tmp/babbler_devel_out # make the -j4 optional input
+  if [ $? -eq 0 ]; then
+    echo "Done."
+  else
+    echo ""
+    cat /tmp/babbler_devel_out
+    echo "Error: Babbler failed to compile."
+    failed=true
+    break
+  fi
+
+  echo -n "Running test harness... "
+  ./run_tests -j4 &> /tmp/babbler_devel_out
+  if [ $? -eq 0 ]; then
+    echo "Done."
+  else
+    echo ""
+    cat /tmp/babbler_devel_out
+    failed=true
+    break
+  fi
+
+  for inputfile in $(git ls-files *.i)
+  do
+    echo -n "Executing $inputfile... "
+    ./babbler-opt -i $inputfile &> /tmp/babbler_devel_out
+    if [ $? -eq 0 ]; then
+      echo "Done."
+    else # moose error report will be output
+      echo ""
+      cat /tmp/babbler_devel_out
+      failed=true
+      break 2
+    fi
+  done
+
   # ensure a clean repository (you can't run this command enough here)
   git clean -xdf &> /dev/null
 done
+rm /tmp/babbler_devel_out
 
 # ----------------------------------------------------------------------
 
-# overwrite devel with the temp branch and push to remote
-git branch -D devel
-git branch -m devel
-echo "Renamed branch 'temp' to 'devel'"
-echo -e "Checking git log:\n"
-git log
-git push -u -f origin devel
+if ! $failed; then
+  # overwrite devel with the temp branch and push to remote
+  git branch -D devel
+  git branch -m devel
+  echo "Renamed branch 'temp' to 'devel'"
+  echo -e "Checking git log:\n"
+  git log
+  git push -u -f origin devel
 
-# push new tags to remote
-echo -e "Checking git tag:\n"
-git tag
-git push origin *_devel
+  # force push new tags to remote (force so that existing ones are overwritten)
+  echo -e "Checking git tag:\n"
+  git tag
+  git push origin *_devel -f
 
-# pop stash and stage submodule update
-echo "Leaving directory: 'babbler/'"
-cd ../
-if $stashed; then
-  git stash apply --quiet
-  git stash drop stash@{0}
+  # pop stash and stage submodule update
+  echo "Leaving directory: 'babbler/'"
+  cd ../
+  if $stashed; then
+    git stash apply --quiet
+    git stash drop stash@{0}
+  fi
+
+  # stage submodule update and report final git status
+  git add -v babbler
+  echo -e "Checking git status:\n"
+  git status
+
+  # messages to follow succesful update
+  echo "Babbler update complete."
+  echo -n "Changes pushed to branch '`cd babbler/ && git symbolic-ref --short HEAD`' of "
+  echo "'`cd babbler/ && git ls-remote --get-url`'."
+  echo "View repository at https://github.com/idaholab/babbler/tree/devel."
+  echo ""
+  echo "'babbler' submodule checked out at `cd babbler/ && git rev-parse HEAD`."
+  echo "Commit and push 'babbler' submodule update to `git ls-remote --get-url` when ready."
+else
+  # reset submodule back to original state
+  git checkout devel
+  git branch -D temp
+  git fetch --tags
+
+  # pop stash
+  echo "Leaving directory: 'babbler/'"
+  cd ../
+  if $stashed; then
+    git stash apply --quiet
+    git stash drop stash@{0}
+  fi
+
+  # messages to follow failed update
+  echo "Babbler update failed. Please check output for error reports."
 fi
-
-# stage submodule update and report final git status
-git add -v babbler
-echo -e "Checking git status:\n"
-git status
-
-# messages to follow succesful update
-echo "Babbler update complete."
-echo -n "Changes pushed to branch '`cd babbler/ && git symbolic-ref --short HEAD`' of "
-echo "'`cd babbler/ && git ls-remote --get-url`'."
-echo "View repository at https://github.com/idaholab/babbler/tree/devel."
-echo ""
-echo "'babbler' submodule checked out at `cd babbler/ && git rev-parse HEAD`."
-echo "Commit and push 'babbler' submodule update to `git ls-remote --get-url` when ready."
