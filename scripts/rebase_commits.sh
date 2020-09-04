@@ -42,12 +42,15 @@ function copydiff {
 
   # define convenience variables (these are the required positional arguments for this func)
   diff=$1 # diff argument must be the entire string - pass it in "$1" format
-  srcfile=$2
-  dstfile=$3
+  gitdiff=$2 # same as diff - pass it in "$2" format
+  srcfile=$3
+  dstfile=$4
 
   # copy only those lines which don't match the retro diff
   ifs=$IFS # store default internal field separator so we can switch back and forth
-  for i in $(seq 1 $(wc -l < $srcfile))
+  i=$((1)) # initialize file line indexing
+  skipped=$((0)) # initialize value to adjust $srcfile indices in $diff to reflect those in $gitdiff
+  while [ $i -le $(wc -l < $srcfile) ]
   do
     difftype="None"
     for d in $diff
@@ -61,9 +64,9 @@ function copydiff {
       IFS=$ifs # restore default IFS
 
       # store lower and upper line diff indices for $srcfile
-      srclower=${srclines[0]}
-      srcupper=${srclines[1]}
-      if [ -z $srcupper ]; then
+      srclower=$((${srclines[0]} + $skipped))
+      srcupper=$((${srclines[1]} + $skipped))
+      if [ $srcupper -eq 0 ]; then
         srcupper=$srclower
       fi
 
@@ -84,19 +87,60 @@ function copydiff {
     # copy lines from $srcfile to '/tmp/dstfile' based on the type of `diff` determined
     touch /tmp/dstfile
     if [ $difftype = "None" ]; then
-      sed -n "$i"p $srcfile >> /tmp/dstfile
+      # obtain diff data between local version of $srcfile and the one at the specified head
+      gitdifftype="None"
+      for d in $gitdiff
+      do
+        IFS="acd"
+        read -r -a lines <<< $d
+        IFS=","
+        read -r -a newlines <<< ${lines[0]}
+        read -r -a oldlines <<< ${lines[1]}
+        IFS=$ifs
+
+        newlower=${newlines[0]}
+        newupper=${newlines[1]}
+        if [ -z $newupper ]; then
+          newupper=$newlower
+        fi
+
+        oldlower=${oldlines[0]}
+        oldupper=${oldlines[1]}
+        if [ -z $newupper ]; then
+          oldupper=$oldlower
+        fi
+
+        if [ $i -ge $newlower ] && [ $i -le $newupper ]; then
+          gitdifftype=$(echo $d | sed 's/[^acd]*//g')
+          break
+        fi
+      done
+
+      # if no diff between $srcfile and $dstfile - copy line. If it is a new line or if a line has
+      # been deleted as per $gitdiff - update the indices in $diff to reflect correct indices
+      if [[ $gitdifftype = "None" || $gitdifftype = "c" ]]; then
+        sed -n "$i"p $srcfile >> /tmp/dstfile
+      elif [ $gitdifftype = "d" ]; then
+        skipped=$(($skipped + 1))
+      elif [ $gitdifftype = "a" ]; then
+        sed -n "$i"p $srcfile >> /tmp/dstfile
+        skipped=$(($skipped - ($oldupper - $oldlower + 1)))
+      fi
     elif [ $difftype = "a" ]; then
       sed -n "$i"p $srcfile >> /tmp/dstfile
       for range in $(seq $dstlower $dstupper)
       do
         sed -n "$(($(wc -l < /tmp/dstfile) + 1))"p $dstfile >> /tmp/dstfile
       done
-    elif [ $difftype = "c" ] && [ $i = $srcupper ]; then
+    elif [ $difftype = "c" ] && [ $i -eq $srcupper ]; then
       for range in $(seq $dstlower $dstupper)
       do
         sed -n "$(($(wc -l < /tmp/dstfile) + 1))"p $dstfile >> /tmp/dstfile
       done
     fi
+
+    # update current line index
+    i=$(($i + 1))
   done
 
   # overwrite $dstfile with the temporary merger file
@@ -105,27 +149,34 @@ function copydiff {
 
 for dstdir in step*
 do
+  if [ -n "$(git diff --name-only $dstdir)" ]; then
+    echo "Error: There are unstaged changes in '$dstdir'. Please add or stash them before rebasing."
+    exit 1
+  fi
+
   if [ ${dstdir:4:2} -gt ${srcdir:4:2} ]; then
     for srcfile in $(git ls-files $srcdir)
     do
       # Find the destination file if it exists
       dstfile=$dstdir${srcfile#$srcdir}
       if [ ! -f $dstfile ]; then
-        # issue warning, skipping file - if it is a new file, it should be added by some other means
+        echo "Warning: Cannot merge changes from '$srcfile' into non-existant file: '$dstfile'."
         continue
       fi
 
       # Write a temporary file containing the contents of $srcfile at $sha and output a `diff`
       git show $sha:$srcfile > /tmp/srcfile
       diff=$(diff /tmp/srcfile $dstfile | grep '^[1-9]') # pipe to grep to and only output diff code
-      rm /tmp/srcfile
 
       # Invoke function to copy lines from $srcfile to $dstfile which don't match $diff
-      if [ -n "$diff" ]; then
+      if [[ -n "$diff" || -n $(git status $srcfile -s) ]]; then
         echo -n "Merging changes from '$srcfile' into '$dstfile'... "
-        copydiff "$diff" $srcfile $dstfile
+        copydiff "$diff" "$(diff $srcfile /tmp/srcfile | grep '^[1-9]')" $srcfile $dstfile
         echo "Done."
       fi
+
+      # delete the temporary file copied from head at $sha
+      rm /tmp/srcfile
     done
   fi
 done
