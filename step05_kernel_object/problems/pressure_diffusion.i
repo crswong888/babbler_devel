@@ -21,23 +21,23 @@
 
 [Kernels]
   [diffusion]
-    type = DarcyPressure # zero-gravity, divergence-free form of Darcy's law
+    type = DarcyPressure # Zero-gravity, divergence-free form of Darcy's law
     variable = pressure  # Operate on the "pressure" variable from above
   []
 []
 
 [BCs]
   [inlet]
-    type = DirichletBC  # Simple u=value BC
-    variable = pressure # Variable to be set
-    boundary = left     # Name of a sideset in the mesh
-    value = 4000        # (Pa) From Figure 2 from paper. First data point for 1mm spheres.
+    type = ADDirichletBC # Simple u=value BC
+    variable = pressure  # Variable to be set
+    boundary = left      # Name of a sideset in the mesh
+    value = 4000         # (Pa) From Figure 2 from paper. First data point for 1mm spheres.
   []
   [outlet]
-    type = DirichletBC
+    type = ADDirichletBC
     variable = pressure
     boundary = right
-    value = 0           # (Pa) Gives the correct pressure drop from Figure 2 for 1mm spheres
+    value = 0            # (Pa) Gives the correct pressure drop from Figure 2 for 1mm spheres
   []
 []
 
