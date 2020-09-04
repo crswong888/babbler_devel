@@ -18,7 +18,7 @@ fi
 # remove forward slash from source directory name if provided and check if dir exists
 srcdir="${1%/}"
 if [ ! -d $srcdir ]; then
-  echo "Error: Directory $srcdir does not exist."
+  echo "Error: Could not find a directory named '$srcdir/'."
   exit 1
 fi
 
@@ -149,12 +149,13 @@ function copydiff {
 
 for dstdir in step*
 do
-  if [ -n "$(git diff --name-only $dstdir)" ]; then
-    echo "Error: There are unstaged changes in '$dstdir'. Please add or stash them before rebasing."
-    exit 1
-  fi
-
   if [ ${dstdir:4:2} -gt ${srcdir:4:2} ]; then
+    if [ -n "$(git diff --name-only $dstdir)" ]; then
+      echo -n "Error: There are unstaged changes in the '$dstdir/' directory. Please add or stash "
+      echo    "them before rebasing."
+      exit 1
+    fi
+
     for srcfile in $(git ls-files $srcdir)
     do
       # Find the destination file if it exists
