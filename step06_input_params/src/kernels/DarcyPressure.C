@@ -5,7 +5,7 @@ registerMooseObject("BabblerApp", DarcyPressure);
 InputParameters
 DarcyPressure::validParams()
 {
-  InputParameters params = ADKernel::validParams();
+  InputParameters params = ADKernelGrad::validParams();
   params.addClassDescription("Compute the diffusion term for Darcy pressure ($p$) equation: "
                              "$-\\nabla \\cdot \\frac{\\mathbf{K}}{\\mu} \\nabla p = 0$");
 
@@ -23,7 +23,7 @@ DarcyPressure::validParams()
 }
 
 DarcyPressure::DarcyPressure(const InputParameters & parameters)
-  : ADKernel(parameters),
+  : ADKernelGrad(parameters),
 
     // Get the parameters from the input file
     _permeability(getParam<Real>("permeability")),
@@ -31,8 +31,8 @@ DarcyPressure::DarcyPressure(const InputParameters & parameters)
 {
 }
 
-ADReal
-DarcyPressure::computeQpResidual()
+ADRealVectorValue
+DarcyPressure::precomputeQpResidual()
 {
-  return (_permeability / _viscosity) * _grad_test[_i][_qp] * _grad_u[_qp];
+  return (_permeability / _viscosity) * _grad_u[_qp];
 }
