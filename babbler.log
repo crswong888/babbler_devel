@@ -20,5 +20,5 @@
 []
 
 [step06_input_params]
-  Made "permeability" and "viscosity" validParams objects and specified required value in input file
+  Defined "permeability" and "viscosity" input parameters
 []
