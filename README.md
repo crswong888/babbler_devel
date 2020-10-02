@@ -16,12 +16,12 @@ git clone git@github.com:crswong888/babbler_devel.git
 The Babbler application (or perhaps, some other application used for the purposes of a MOOSE tutorial) can be initialized while simultaneously establishing the initial commit. For example, we might name the initial commit's directory "step01_moose_app" and run the following commands:
 
 ```
-cd ~/projects/babbler_devel
+cd ~/projects/babbler_devel/
 ~/projects/moose/scripts/stork.sh Babbler
 mv babbler/ step01_moose_app/
 ```
 
-Many of the tasks performed by shell scripts available from `babbler_devel/scripts/` make use of the local Git configuration of `crswong888/babbler_devel/`, so, in general, it is wise to keep track of all of the files:
+Many of the tasks performed by shell scripts available from `babbler_devel/scripts/` make use of the local Git configuration of `crswong888/babbler_devel`, so, in general, it is wise to keep track of all of the files:
 
 ```
 git add step01*
@@ -43,7 +43,13 @@ As an example, if the name for the second `idaholab/babbler` commit were "step02
 ./scripts/new_commit.sh step01_moose_app/ step02_input_file/ --add
 ```
 
-Then, changes to Babbler, which will reflect the second commit, can be made in `step02_input_file`.
+Then, changes to Babbler, which will reflect the second commit, can be made in `step02_input_file/`. Once all of the desired changes have been made in the commit directory, ensure that C++ code is styled properly, changes have been tracked, and that everything works properly:
+
+```
+git clang-format -f
+git add step02*
+./scripts/test_commit.sh step02_input_file/
+```
 
 ### Commit Messages
 
@@ -68,6 +74,7 @@ The [`devel`](https://github.com/idaholab/babbler/tree/devel) branch of the `ida
 Only changes tracked by, or committed to, the local copy of `crswong888/babbler_devel` will be applied to the `idaholab/babbler` commits. So be sure to, at least, add tracking before running the script:
 
 ```
+git clang-format -f
 git add step*
 ./scripts/update_babbler.sh
 ```
