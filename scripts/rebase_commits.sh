@@ -87,6 +87,9 @@ function copydiff {
     # copy lines from $srcfile to '/tmp/dstfile' based on the type of `diff` determined
     touch /tmp/dstfile
     if [ $difftype = "None" ]; then
+      # if there is no diff at $sha, then any line in local version of $srcfile is merged
+      sed -n "$i"p $srcfile >> /tmp/dstfile
+
       # obtain diff data between local version of $srcfile and the one at the specified head
       gitdifftype="None"
       for d in $gitdiff
@@ -106,7 +109,7 @@ function copydiff {
 
         oldlower=${oldlines[0]}
         oldupper=${oldlines[1]}
-        if [ -z $newupper ]; then
+        if [ -z $oldupper ]; then
           oldupper=$oldlower
         fi
 
@@ -116,14 +119,10 @@ function copydiff {
         fi
       done
 
-      # if no diff between $srcfile and $dstfile - copy line. If it is a new line or if a line has
-      # been deleted as per $gitdiff - update the indices in $diff to reflect correct indices
-      if [[ $gitdifftype = "None" || $gitdifftype = "c" ]]; then
-        sed -n "$i"p $srcfile >> /tmp/dstfile
-      elif [ $gitdifftype = "d" ]; then
+      # If a line was created or deleted in $srcfile - diff indices at $sha need to be adjusted
+      if [ $gitdifftype = "d" ]; then
         skipped=$(($skipped + 1))
       elif [ $gitdifftype = "a" ]; then
-        sed -n "$i"p $srcfile >> /tmp/dstfile
         skipped=$(($skipped - ($oldupper - $oldlower + 1)))
       fi
     elif [ $difftype = "a" ]; then
