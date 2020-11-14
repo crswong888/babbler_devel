@@ -121,11 +121,21 @@ do
   echo "Leaving directory: 'babbler/'"
   cd ../
   srcname=$(basename $file)
-  msg=`commitmsg $srcname`
+  msg=$(commitmsg $srcname)
+
+  # ensure that a corresponding commit message exists - if not, skip the commit directory
+  if [ -z "$msg" ]; then
+    echo "Warning: Could not find a commit message for '$srcname/'. To commit this directory to "
+    echo "'babbler', be sure to add a message for it to 'babbler.log' and that the name of the "
+    echo "block is '$srcname'."
+    echo "Entering directory: 'babbler/'"
+    cd babbler/
+    continue
+  fi
 
   # copy files from source to Babbler
-  echo -n "Copying files tracked by Git from '$srcname' to 'babbler'... "
-  for gitfile in `git ls-files $srcname`
+  echo -n "Copying files tracked by Git from '$srcname/' to 'babbler'... "
+  for gitfile in $(git ls-files $srcname)
   do
     dst="babbler/${gitfile#$srcname}"
     copyfile $gitfile $dst
