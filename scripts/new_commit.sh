@@ -59,7 +59,7 @@ function gitstatus {
     status=0
   else
     # check if file is already being tracked to avoid overwriting those changes
-    for gitfile in `git ls-files $2`
+    for gitfile in $(git ls-files $2)
     do
       if [ $1 == $gitfile ]; then
         status=0

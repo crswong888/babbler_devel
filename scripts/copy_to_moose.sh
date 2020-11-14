@@ -46,6 +46,19 @@ elif [ ! -d $dstname ]; then
   mkdir $dstname
 fi
 
+# check that there aren't any unstaged changes in MOOSE version
+if [ -n "$(git diff --name-only $dstname)" ]; then
+  echo "Error: There are unstaged changes in the '$dstname/' directory. Please add or stash them "
+  echo "before overwriting files."
+  exit 1
+fi
+
+# parse --add option
+track=false
+if [[ "$2" == "-a" || "$2" == "--add" || "$3" == "-a" || "$3" == "--add" ]]; then
+  track=true
+fi
+
 # Function for copying file to a specified destination
 function copyfile {
   dstpath="$(dirname $2)"
@@ -63,44 +76,29 @@ function gitstatus {
     status=0
   else
     # check if file is already being tracked to avoid overwriting those changes
-    for gitfile in `git ls-files $2`
-    do
-      if [ $1 == $gitfile ]; then
-        status=0
-        break
-      fi
-    done
+    if [ -n "$(git diff --name-only --cached $1)" ]; then
+      status=0
+    fi
   fi
   return $status
 }
 
-echo -n "Copying files tracked by Git from '$srcdir$srcname' to '$dstname'... "
-for file in `cd $srcdir && git ls-files $srcname`
+echo "Copying files tracked by Git from '$srcdir$srcname' to '$dstname'... "
+for file in $(cd $srcdir && git ls-files $srcname)
 do
   dst=$dstname${file#$srcname}
   copyfile $srcdir$file $dst
 
   # only add new untracked files to preserve any previously staged changes
-  if [[ "$2" == "-a" || "$2" == "--add" || "$3" == "-a" || "$3" == "--add" ]] && ! gitstatus $dst $dstname; then
-    git add $dst
+  if $track; then
+    if ! gitstatus $dst; then
+      git add $dst
+    else
+      echo -e "File '$dst' is already staged for commit so changes were left untracked."
+    fi
   fi
 done
 echo "Done."
 
-echo "Leaving directory: 'moose/'"
-cd ../babbler_devel
-echo -n "Copying files not tracked by Git, except those which match a '.gitignore' pattern... "
-if [ ! -f "$srcname.gitignore" ]; then
-  echo -e "\nFile '$srcname.gitignore' not found. Skipping untracked files."
-else
-  for file in `find $srcname`
-  do
-    if ! gitstatus $file $srcname && [ -z "`git check-ignore $file`" ]; then
-      copyfile $file "../moose/$dstname${file#$srcname}"
-    fi
-  done
-fi
-echo "Done."
-
 echo -e "Checking git status in '../moose/':\n"
-cd ../moose/ && git status
+git status
