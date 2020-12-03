@@ -29,7 +29,7 @@ fi
 # inoke copy_to_moose script on all commit directories in specified range
 for srcdir in step*
 do
-  if [[ ${srcdir:4:2} -ge $1 ]] && [[ ${srcdir:4:2} -le $2 ]]; then
+  if [ ${srcdir:4:2} -ge $1 ] && [ ${srcdir:4:2} -le $2 ]; then
     echo "Now running: './scripts/copy_to_moose.sh $srcdir $3 $4'"
     ./scripts/copy_to_moose.sh $srcdir $3 $4
 
@@ -37,6 +37,6 @@ do
     if [ ! $? -eq 0 ]; then
       exit 1
     fi
-    echo -e "Leaving directory: '../moose/'\n"
+    echo -e "Leaving directory: '../moose/'"
   fi
 done
