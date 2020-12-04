@@ -13,10 +13,7 @@ shopt -s extglob
 #
 # compiling and testing following each commit should be optional, --run-tests
 #
-# creating tags should be optional, -t or --tags
-#
 # pushing to remote babbler should be optional, -p or --push
-#   - this also specifies wether tags are pushed too when -t or --tags
 #
 # perhaps the remote branch should be optional, "some_branch" instead of current default, "devel"
 #   - except this might make things messy - no need to create all kinnds of branches of babbler
@@ -74,7 +71,7 @@ function copyfile {
 #
 # git diff will error if the the <path> doesn't exist - need to verify that the exit code is 0 too
 stashed=false
-if [ -n "`git diff --name-only step*`" ]; then
+if [ -n "$(git diff --name-only step*)" ]; then
   git stash push -- step*
   stashed=true
 fi
@@ -87,22 +84,9 @@ cd babbler/
 make clean
 git clean -xdf &> /dev/null
 
-# ensure devel is checked out and clean
-git fetch
-git checkout devel # if devel not found, git checkout -b devel origin/devel, if origin/devel not found, exit
-git reset --hard origin/devel
-git clean -xdf &> /dev/null
-
-# clear all local tags with "devel" suffix
-for tag in $(git tag -l)
-do
-  if [ ${tag#step??_} == "devel" ]; then
-    git tag -d $tag
-  fi
-done
-
 # create a temporary orphan branch and clear the directory - preserve the .git, of course
-if [ -n "`git show-ref refs/heads/temp`" ]; then
+echo "Creating orphan branch 'temp'"
+if [ -n "$(git show-ref refs/heads/temp)" ]; then
   git branch -D temp
 fi
 git checkout --orphan temp
@@ -151,9 +135,6 @@ do
   git add --all
   git commit -m "$msg"
 
-  # the tags with the `devel` suffix eventually overwrite tags which refer to master branch commits
-  git tag "${srcname:0:6}_devel"
-
   # compile application, run test harness, and run all input files
   build_and_test
 
@@ -164,18 +145,15 @@ done
 # ----------------------------------------------------------------------
 
 if ! $failed; then
-  # overwrite devel with the temp branch and push to remote
-  git branch -D devel
+  # overwrite existing devel with the temp branch and push to remote
+  if [ -n "$(git show-ref refs/heads/devel)" ]; then
+    git branch -D devel
+  fi
   git branch -m devel
   echo "Renamed branch 'temp' to 'devel'"
   echo -e "Checking git log:\n"
   git log
   git push -u -f origin devel
-
-  # force push new tags to remote (force so that existing ones are overwritten)
-  echo -e "Checking git tag:\n"
-  git tag
-  git push origin *_devel -f
 
   # pop stash and stage submodule update
   echo "Leaving directory: 'babbler/'"
@@ -200,13 +178,14 @@ if ! $failed; then
   echo "Commit and push 'babbler' submodule update to `git ls-remote --get-url` when ready."
 else
   # reset submodule back to original state
-  git checkout devel
+  git checkout master
   git branch -D temp
-  git fetch --tags
-
-  # pop stash
   echo "Leaving directory: 'babbler/'"
   cd ../
+  git submodule deinit babbler/ -f
+  git submodule update --init babbler/
+
+  # pop stash
   if $stashed; then
     git stash apply --quiet
     git stash drop stash@{0}
