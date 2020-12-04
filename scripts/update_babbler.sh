@@ -30,6 +30,9 @@ if [ ! $? -eq 0 ]; then
 fi
 echo "Done."
 
+# import the build_and_test function
+source ./scripts/build_and_test.sh
+
 # Function for reading a commit message for a specified directory from 'babbler.log'
 function commitmsg {
   # babbler.log must exist
@@ -151,49 +154,12 @@ do
   # the tags with the `devel` suffix eventually overwrite tags which refer to master branch commits
   git tag "${srcname:0:6}_devel"
 
-  # compile application, run tests and all input files - we need to ensure that every step works
-  echo -n "Compiling Babbler... "
-  make clean &> /tmp/babbler_devel_out
-  make -j4 &> /tmp/babbler_devel_out # make the -j4 optional input
-  if [ $? -eq 0 ]; then
-    echo "Done."
-  else
-    echo ""
-    cat /tmp/babbler_devel_out
-    echo "Error: Babbler failed to compile."
-    failed=true
-    break
-  fi
-
-  echo -n "Running test harness... "
-  ./run_tests -j4 &> /tmp/babbler_devel_out
-  if [ $? -eq 0 ]; then
-    echo "Done."
-  else
-    echo ""
-    cat /tmp/babbler_devel_out
-    failed=true
-    break
-  fi
-
-  for inputfile in $(git ls-files *.i)
-  do
-    echo -n "Executing $inputfile... "
-    ./babbler-opt -i $inputfile &> /tmp/babbler_devel_out
-    if [ $? -eq 0 ]; then
-      echo "Done."
-    else # moose error report will be output
-      echo ""
-      cat /tmp/babbler_devel_out
-      failed=true
-      break 2
-    fi
-  done
+  # compile application, run test harness, and run all input files
+  build_and_test
 
   # ensure a clean repository (you can't run this command enough here)
   git clean -xdf &> /dev/null
 done
-rm /tmp/babbler_devel_out
 
 # ----------------------------------------------------------------------
 
