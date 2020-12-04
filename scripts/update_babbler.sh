@@ -136,7 +136,10 @@ do
   git commit -m "$msg"
 
   # compile application, run test harness, and run all input files
-  build_and_test
+  if ! build_and_test; then
+    failed=true
+    break
+  fi
 
   # ensure a clean repository (you can't run this command enough here)
   git clean -xdf &> /dev/null

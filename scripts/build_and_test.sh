@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# returns with an exit status of 0 if compilation and testing succesful, else exits with 1
+
 # import this function with `source ./scripts/build_and_test.sh` BEFORE entering babbler directories
 function build_and_test {
   echo -n "Compiling Babbler... "
@@ -11,8 +13,7 @@ function build_and_test {
     echo ""
     cat /tmp/babbler_devel_out
     echo "Error: Babbler failed to compile."
-    failed=true
-    break
+    return 1
   fi
 
   echo -n "Running test harness... "
@@ -22,8 +23,7 @@ function build_and_test {
   else
     echo ""
     cat /tmp/babbler_devel_out
-    failed=true
-    break
+    return 1
   fi
 
   for inputfile in $(git ls-files *.i)
@@ -41,10 +41,10 @@ function build_and_test {
     else # moose error report will be output
       echo ""
       cat /tmp/babbler_devel_out
-      failed=true
-      break 2
+      return 1
     fi
   done
 
   rm /tmp/babbler_devel_out
+  return 0 # indicate succesful completion
 }
