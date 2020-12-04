@@ -22,3 +22,7 @@
 [step06_input_params]
   Defined "permeability" and "viscosity" input parameters
 []
+
+[step08_test_harness]
+  added a zero-viscosity error and created tests for Darcy pressure kernel
+[]

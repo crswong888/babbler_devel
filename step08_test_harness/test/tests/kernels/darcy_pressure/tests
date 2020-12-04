@@ -10,7 +10,7 @@
   [zero_viscosity_error]
     type = RunException
     input = 'zero_viscosity_error.i'
-    expect_err = "In DarcyPressure zero_viscosity: The 'viscosity' must be a non-zero real number."
+    expect_err = "The viscosity must be a non-zero real number."
     requirement = "The system shall include a tutorial that introduces the ability to compute residual contributions for the pressure term of Darcy's equation."
   []
 []

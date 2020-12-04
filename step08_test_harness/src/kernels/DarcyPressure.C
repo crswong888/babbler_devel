@@ -31,10 +31,7 @@ DarcyPressure::DarcyPressure(const InputParameters & parameters)
 {
   // check that viscosity value is not zero
   if (_viscosity == 0)
-    mooseError("In DarcyPressure ",
-               _name,
-               ": The 'viscosity' must be a non-zero real number.");
-
+    paramError("viscosity", "The viscosity must be a non-zero real number.");
 }
 
 ADRealVectorValue
