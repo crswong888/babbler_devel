@@ -2,9 +2,6 @@
 
 ### merge the 'devel' branch into 'master' and delete 'devel' once everything looks good
 
-### Note: civet could probably run './scripts/update_babbler.sh' followed by this script whenever
-### changes to the application directories are made
-
 # check connection to remote repository
 echo -n "Checking connection to remote '`cd babbler/ && git ls-remote --get-url`'... "
 cd babbler/ && git ls-remote &> /dev/null && cd ../
@@ -28,7 +25,7 @@ git clean -xdf &> /dev/null
 # fetch origin remote and check that 'devel' branch exists
 git fetch
 if [ -z "$(git show-ref refs/remotes/origin/devel)" ]; then
-  echo "Error: Remote branch 'devel' does not exist on Babbler repository. Run 'update_babbler.sh' "
+  echo "Error: Remote branch 'devel' not found on Babbler repository. Run 'push_babbler_devel.sh' "
   echo "       and verify that the remote repository looks good before running this script."
   exit 1
 fi
@@ -40,7 +37,7 @@ fi
 git checkout --orphan temp
 git reset --hard origin/devel
 
-# assuming 'update_babbler.sh' ran, then every commit has been tested, but test at least HEAD here
+# assuming 'push_babbler_devel.sh' ran, then every commit has been tested, but test at least HEAD here
 if ! build_and_test; then
   echo "Testing of Babbler application failed. Please check output for error reports."
   exit 1
