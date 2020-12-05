@@ -180,7 +180,7 @@ if ! $failed; then
   echo "Commit and push Babbler submodule update to `git ls-remote --get-url` when ready."
 else
   # reset submodule back to original state
-  git checkout master # need to leave 'temp' before deleting it
+  git checkout main # need to leave 'temp' before deleting it
   git branch -D temp
   echo "Leaving directory: 'babbler/'"
   cd ../

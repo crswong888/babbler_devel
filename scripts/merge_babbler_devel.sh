@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### merge the 'devel' branch into 'master' and delete 'devel' once everything looks good
+### merge the 'devel' branch into 'main' and delete 'devel' once everything looks good
 
 # check connection to remote repository
 echo -n "Checking connection to remote '`cd babbler/ && git ls-remote --get-url`'... "
@@ -43,15 +43,15 @@ if ! build_and_test; then
   exit 1
 fi
 
-# overwrite existing 'master' with 'temp' branch and push to remote
-if [ -n "$(git show-ref refs/heads/master)" ]; then
-  git branch -D master
+# overwrite existing 'main' with 'temp' branch and push to remote
+if [ -n "$(git show-ref refs/heads/main)" ]; then
+  git branch -D main
 fi
-git branch -m master
-echo "Renamed branch 'temp' to 'master'"
+git branch -m main
+echo "Renamed branch 'temp' to 'main'"
 echo -e "Checking git log:\n"
 git log
-git push -u -f origin master
+git push -u -f origin main
 
 # delete local and remote 'devel' branch
 if [ -n "$(git show-ref refs/heads/devel)" ]; then
