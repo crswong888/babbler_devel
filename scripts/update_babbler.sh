@@ -85,7 +85,6 @@ make clean
 git clean -xdf &> /dev/null
 
 # create a temporary orphan branch and clear the directory - preserve the .git, of course
-echo "Creating orphan branch 'temp'"
 if [ -n "$(git show-ref refs/heads/temp)" ]; then
   git branch -D temp
 fi
@@ -113,8 +112,8 @@ do
   # ensure that a corresponding commit message exists - if not, skip the commit directory
   if [ -z "$msg" ]; then
     echo "Warning: Could not find a commit message for '$srcname/'. To commit this directory to "
-    echo "'babbler', be sure to add a message for it to 'babbler.log' and that the name of the "
-    echo "block is '$srcname'."
+    echo "         Babbler, be sure to add a message for it to 'babbler.log' and that the name of "
+    echo "         the block is '$srcname'."
     echo "Entering directory: 'babbler/'"
     cd babbler/
     continue
@@ -148,7 +147,7 @@ done
 # ----------------------------------------------------------------------
 
 if ! $failed; then
-  # overwrite existing devel with the temp branch and push to remote
+  # overwrite existing 'devel' with 'temp' branch and push to remote
   if [ -n "$(git show-ref refs/heads/devel)" ]; then
     git branch -D devel
   fi
@@ -177,11 +176,11 @@ if ! $failed; then
   echo "'`cd babbler/ && git ls-remote --get-url`'."
   echo "View repository at https://github.com/idaholab/babbler/tree/devel."
   echo ""
-  echo "'babbler' submodule checked out at `cd babbler/ && git rev-parse HEAD`."
-  echo "Commit and push 'babbler' submodule update to `git ls-remote --get-url` when ready."
+  echo "Babbler submodule checked out at `cd babbler/ && git rev-parse HEAD`."
+  echo "Commit and push Babbler submodule update to `git ls-remote --get-url` when ready."
 else
   # reset submodule back to original state
-  git checkout master
+  git checkout master # need to leave 'temp' before deleting it
   git branch -D temp
   echo "Leaving directory: 'babbler/'"
   cd ../
@@ -195,5 +194,5 @@ else
   fi
 
   # messages to follow failed update
-  echo "Babbler update failed. Please check output for error reports."
+  echo "Babbler update failed! Please check output for error reports."
 fi
