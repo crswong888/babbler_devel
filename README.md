@@ -16,8 +16,8 @@ git clone git@github.com:crswong888/babbler_devel.git
 The Babbler application (or perhaps, some other application used for the purposes of a MOOSE tutorial) can be initialized while simultaneously establishing the initial commit. For example, we might name the initial commit's directory "step01_moose_app" and run the following commands:
 
 ```
-cd ~/projects/babbler_devel/
-~/projects/moose/scripts/stork.sh Babbler
+cd ~/projects/
+moose/scripts/stork.sh Babbler
 mv babbler/ step01_moose_app/
 ```
 
