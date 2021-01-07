@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# NOTE: There MUST be a difference between the local source files and those at the specified SHA,
+# which defaults to 'HEAD'. Otherwise, there is no way to tell what has changed in the source file,
+# and therefore, what ought to be merged into all destination files.
+#
+# If the changes you wish to rebase off of have already been committed, specify an old SHA that
+# represents the state of the file before the new changes were applied.
+
 function printusage {
     echo "Usage:    ./scripts/rebase_commits.sh <source> <sha>"
     echo ""
@@ -142,13 +149,20 @@ function copydiff {
     i=$(($i + 1))
   done
 
-  # overwrite $dstfile with the temporary merger file
-  mv /tmp/dstfile $dstfile
+  # overwrite $dstfile with the temporary merger file if any actual changes were made
+  if [ -n "$(diff /tmp/dstfile $dstfile)" ]; then
+    mv /tmp/dstfile $dstfile
+    echo "Merged changes from '$srcfile' into '$dstfile'"
+    return 0 # indicate that a file has actually changed
+  fi
+
+  return 1 # indicate that no changes were made
 }
 
+changes=false # initialize variable to track wether any changes have been made at all
 for dstdir in step*
 do
-  if [ ${dstdir:4:2} -gt ${srcdir:4:2} ]; then
+  if [ $srcdir == "stork" ] || [ ${dstdir:4:2} -gt ${srcdir:4:2} ]; then
     if [ -n "$(git diff --name-only $dstdir)" ]; then
       echo -n "Error: There are unstaged changes in the '$dstdir/' directory. Please add or stash "
       echo    "them before rebasing."
@@ -167,12 +181,13 @@ do
       # Write a temporary file containing the contents of $srcfile at $sha and output a `diff`
       git show $sha:$srcfile > /tmp/srcfile
       diff=$(diff /tmp/srcfile $dstfile | grep '^[1-9]') # pipe to grep to and only output diff code
+      gitdiff=$(diff $srcfile /tmp/srcfile | grep '^[1-9]')
 
-      # Invoke function to copy lines from $srcfile to $dstfile which don't match $diff
-      if [[ -n "$diff" || -n $(git status $srcfile -s) ]]; then
-        echo -n "Merging changes from '$srcfile' into '$dstfile'... "
-        copydiff "$diff" "$(diff $srcfile /tmp/srcfile | grep '^[1-9]')" $srcfile $dstfile
-        echo "Done."
+      # Copy lines from $srcfile to $dstfile which don't match $diff and merge those that do
+      if [[ -n "$diff" || -n "$gitdiff" ]]; then
+        if copydiff "$diff" "$gitdiff" $srcfile $dstfile; then
+          changes=true
+        fi
       fi
 
       # delete the temporary file copied from head at $sha
@@ -181,5 +196,12 @@ do
   fi
 done
 
-echo -e "Checking git status:\n"
-git status
+if $changes; then
+  echo -e "Checking git status:\n"
+  git status
+else
+  echo "Warning: No changes from '$srcdir' were merged. Be sure that there is a difference between "
+  echo "         the local copy and the one at the specified SHA so that changes can be identified."
+  echo "   Note: SHA used = '$sha'"
+  exit 1
+fi
