@@ -17,7 +17,7 @@
     type = DarcyPressure
     variable = u
     permeability = 0.8451e-09
-    viscosity = 0
+    viscosity = 0 # The viscosity must be a non-zero number, so this input should invoke an error
   []
 []
 
