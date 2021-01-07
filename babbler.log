@@ -16,13 +16,15 @@
 []
 
 [step05_kernel_object]
-  Created kernel to solve Darcy pressure and updated the problem input file
+  developed kernel to solve Darcy pressure and updated the problem input file
 []
 
 [step06_input_params]
-  Defined "permeability" and "viscosity" input parameters
+  defined "permeability" and "viscosity" input parameters
 []
 
 [step08_test_harness]
   added a zero-viscosity error and created tests for Darcy pressure kernel
 []
+
+# Note: tutorial docs could eventually reference this file for all "Commit" sub-steps
