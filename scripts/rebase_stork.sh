@@ -1,29 +1,50 @@
 #!/bin/bash
 
+# list files which are modified by the step01 initialization of Babbler so that they are ignored
+ignore="README.md
+        test/tests/kernels/simple_diffusion/tests"
+
 # delete the existing stork
 if [ -d "stork" ]; then
   rm -rf stork
 fi
 
-# reinitialize stork and delete the README.md (so Babbler modifications are preserved)
+# create directory for storing temp files
+tmp="/tmp/babbler_tmp"
+if [ -d $tmp ]; then
+  rm -rf $tmp
+fi
+mkdir $tmp
+
+# reinitialize stork
 echo "Entering directory: '~/projects'"
 cd ~/projects
 echo -n "Initializing Babbler stork application... "
 moose/scripts/stork.sh Babbler &> /dev/null
 mv babbler/ babbler_devel/stork
-rm babbler_devel/stork/README.md
 echo "Done."
+
+# move files in $ignore to temporary location (so Babbler modifications are preserved)
+for file in $ignore
+do
+  mv babbler_devel/stork/$file $tmp
+done
 
 # invoke rebase commits script
 echo "Leaving directory: '~/projects'"
 cd babbler_devel
 echo -n "Rebasing commits on stork app directory... "
-scripts/rebase_commits.sh stork &> /tmp/babbler_devel_out
-status=$?
+scripts/rebase_commits.sh stork &> $tmp/out
 
 # make sure script exited properly, otherwise, print output from rebase script
-if [ $status -eq 0 ]; then
+if [ $? -eq 0 ]; then
   echo "Done."
+
+  # move ignored files back to stork
+  for file in $ignore
+  do
+    mv $tmp/$(basename $file) stork/$file
+  done
 
   # parse --add option
   if [[ "$1" == "-a" || "$1" == "--add" ]]; then
@@ -34,6 +55,19 @@ if [ $status -eq 0 ]; then
   git status
 else
   echo -e "\n"
-  cat /tmp/babbler_devel_out
+
+  # create a regex pattern to remove any messages specifically about $ignore files
+  squelch="/\("
+  for file in $ignore
+  do
+    squelch="$squelch$(echo $file | sed -e 's/\//\\\//g')\|"
+  done
+
+  # print out and revert changes
+  sed "${squelch%|})/d" $tmp/out
+  git checkout stork*
+  git clean stork/ -f
 fi
-rm /tmp/babbler_devel_out
+
+# delete temp directory
+rm -rf $tmp

@@ -171,6 +171,12 @@ do
 
     for srcfile in $(git ls-files $srcdir)
     do
+      # Check that local copy exists
+      if [ ! -f $srcfile ]; then
+        echo "Warning: Could not find local copy of tracked file '$srcfile'. It will be skipped."
+        continue
+      fi
+
       # Find the destination file if it exists
       dstfile=$dstdir${srcfile#$srcdir}
       if [ ! -f $dstfile ]; then
