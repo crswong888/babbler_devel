@@ -6,14 +6,14 @@
 []
 
 [Variables]
-  [u]
+  [pressure]
   []
 []
 
 [Kernels]
   [diffusion]
     type = DarcyPressure
-    variable = u
+    variable = pressure
     permeability = 0.8451e-09
   []
 []
@@ -21,13 +21,13 @@
 [BCs]
   [left]
     type = ADDirichletBC
-    variable = u
+    variable = pressure
     boundary = left
     value = 0
   []
   [right]
     type = ADDirichletBC
-    variable = u
+    variable = pressure
     boundary = right
     value = 1
   []

@@ -48,7 +48,7 @@ fi
 
 # check that there aren't any unstaged changes in MOOSE version
 if [ -n "$(git diff --name-only $dstname)" ]; then
-  echo "Error: There are unstaged changes in the '$dstname/' directory. Please add or stash them "
+  echo "Error: There are unstaged changes in the '$dstname' directory. Please add or stash them "
   echo "before overwriting files."
   exit 1
 fi

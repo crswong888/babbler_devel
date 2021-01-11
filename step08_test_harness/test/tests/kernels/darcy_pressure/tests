@@ -1,7 +1,6 @@
 [Tests]
   issues = '#15232'
   design = 'examples_and_tutorials/tutorial01_app_development/step08_test_harness.md'
-
   [test]
     type = Exodiff
     input = 'darcy_pressure_test.i'

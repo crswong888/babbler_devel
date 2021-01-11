@@ -24,7 +24,7 @@
 []
 
 [step08_test_harness]
-  added a zero-viscosity error and created tests for Darcy pressure kernel
+  implemented a zero-viscosity error and created tests for the Darcy pressure kernel
 []
 
 # Note: tutorial docs could eventually reference this file for all "Commit" sub-steps
