@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### TODO: need to add a clang format to the end of this
+
 # list files which are modified by the step01 initialization of Babbler so that they are ignored
 ignore="README.md
         test/tests/kernels/simple_diffusion/tests"
