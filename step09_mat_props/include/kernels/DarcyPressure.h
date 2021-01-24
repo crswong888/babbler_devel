@@ -17,7 +17,7 @@ protected:
   /// ADKernel objects must override precomputeQpResidual
   virtual ADRealVectorValue precomputeQpResidual() override;
 
-  /// The reference variables which hold the value for K and mu
-  const Real & _permeability;
-  const Real & _viscosity;
+  /// The material properties which hold the values for K and mu
+  const ADMaterialProperty<Real> & _permeability;
+  const ADMaterialProperty<Real> & _viscosity;
 };
