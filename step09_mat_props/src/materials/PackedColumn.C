@@ -30,7 +30,7 @@ PackedColumn::validParams()
 
 PackedColumn::PackedColumn(const InputParameters & parameters)
   : Material(parameters),
-    _radius(getParam<Real>("viscosity")),
+    _radius(getParam<Real>("radius")),
     _input_viscosity(getParam<Real>("viscosity")),
 
     // Declare two material properties by getting a reference from the MOOSE Material system
@@ -38,7 +38,7 @@ PackedColumn::PackedColumn(const InputParameters & parameters)
     _viscosity(declareADProperty<Real>("viscosity"))
 {
   // From Pamuk and Özdemir (2012): Table 1
-  std::vector<Real> sphere_sizes = {1, 3}; // mm
+  std::vector<Real> sphere_sizes = {1, 3};                // mm
   std::vector<Real> permeability = {0.8451e-9, 8.968e-9}; // m^2
 
   // Set the abscissa-ordinate data on the LinearInterpolation object.
