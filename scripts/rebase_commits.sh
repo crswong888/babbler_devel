@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: add argument to be verbose about warnings - otherwise, don't print certain warnings
+
 # NOTE: There MUST be a difference between the local source files and those at the specified SHA,
 # which defaults to 'HEAD'. Otherwise, there is no way to tell what has changed in the source file,
 # and therefore, what ought to be merged into all destination files.

@@ -27,4 +27,8 @@
   implemented a zero-viscosity error and created tests for the Darcy pressure kernel
 []
 
+[step09_mat_props]
+  developed material to compute properties of fluid flow through packed steel sphere medium and modified Darcy kernel
+[]
+
 # Note: tutorial docs could eventually reference this file for all "Commit" sub-steps
