@@ -119,6 +119,9 @@ do
     continue
   fi
 
+  # delete all physical files in Babbler - they can still be referenced with git tracking
+  rm -r babbler/*
+
   # copy files from source to Babbler
   echo -n "Copying files tracked by Git from '$srcname/' to 'babbler'... "
   for gitfile in $(git ls-files $srcname)
