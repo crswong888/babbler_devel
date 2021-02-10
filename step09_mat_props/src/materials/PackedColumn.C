@@ -8,7 +8,7 @@ PackedColumn::validParams()
   InputParameters params = Material::validParams();
   params.addClassDescription("Computes the permeability of a porous medium made up of packed "
                              "steel spheres of a specified radius in accordance with Pamuk and "
-                             "Özdemir (2012). This also provides a specified dynamic viscosity of "
+                             "Ozdemir (2012). This also provides a specified dynamic viscosity of "
                              "the fluid in the medium.");
 
   // Optional params for sphere radius and viscosity - inputs must satisfy range checked conditions
@@ -37,7 +37,7 @@ PackedColumn::PackedColumn(const InputParameters & parameters)
     _permeability(declareADProperty<Real>("permeability")),
     _viscosity(declareADProperty<Real>("viscosity"))
 {
-  // From Pamuk and Özdemir (2012): Table 1
+  // From Pamuk and Ozdemir (2012): Table 1
   std::vector<Real> sphere_sizes = {1, 3};                // mm
   std::vector<Real> permeability = {0.8451e-9, 8.968e-9}; // m^2
 

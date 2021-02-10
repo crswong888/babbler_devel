@@ -7,7 +7,7 @@
 
 /**
  * Computes the permeability of a porous medium made up of packed steel spheres of a specified
- * radius in accordance with Pamuk and Özdemir (2012). This also provides a specified dynamic
+ * radius in accordance with Pamuk and Ozdemir (2012). This also provides a specified dynamic
  * viscosity of the fluid in the medium.
  */
 class PackedColumn : public ADMaterial
