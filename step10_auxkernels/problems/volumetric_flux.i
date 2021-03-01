@@ -5,8 +5,8 @@
   dim = 2
   nx = 100
   ny = 10
-  xmax = 0.304  # Length of test chamber
-  ymax = 0.0257 # Test chamber radius
+  xmax = 0.304
+  ymax = 0.0257
 []
 
 [Problem]
@@ -19,21 +19,9 @@
 []
 
 [AuxVariables]
-  # [velocity_x]
-  #   order = CONSTANT
-  #   family = MONOMIAL
-  # []
-  # [velocity_y]
-  #   order = CONSTANT
-  #   family = MONOMIAL
-  # []
-  # [velocity_z]
-  #   order = CONSTANT
-  #   family = MONOMIAL
-  # []
   [velocity]
-    order = CONSTANT
-    family = MONOMIAL_VEC
+    order = CONSTANT      # Since "pressure" is approximated linearly, its gradient must be constant
+    family = MONOMIAL_VEC # A monomial interpolation means this is an Elemental AuxVariable
   []
 []
 
@@ -47,31 +35,10 @@
 [AuxKernels]
   [velocity]
     type = DarcyVelocity
-    variable = velocity
-    pressure = pressure
-    execute_on = TIMESTEP_END
+    variable = velocity       # Store volumetric flux vector in "velocity" variable from above
+    pressure = pressure       # Couple to the "pressure" variable from above
+    execute_on = TIMESTEP_END # Perform calculation at the end of the solve step - after Kernels run
   []
-  # [velocity_x]
-  #   type = VectorVariableComponentAux
-  #   variable = velocity_x
-  #   component = x
-  #   execute_on = timestep_end
-  #   vector_variable = velocity
-  # []
-  # [velocity_y]
-  #   type = VectorVariableComponentAux
-  #   variable = velocity_y
-  #   component = y
-  #   execute_on = timestep_end
-  #   vector_variable = velocity
-  # []
-  # [velocity_z]
-  #   type = VectorVariableComponentAux
-  #   variable = velocity_z
-  #   component = z
-  #   execute_on = timestep_end
-  #   vector_variable = velocity
-  # []
 []
 
 [Materials]
@@ -98,7 +65,6 @@
 [Executioner]
   type = Steady
   solve_type = NEWTON
-  l_tol = 1e-16 # tolerate max 64-bit precision (16 significant digits) to avoid round-off errors
   petsc_options_iname = '-pc_type -pc_hypre_type'
   petsc_options_value = ' hypre    boomeramg'
 []

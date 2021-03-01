@@ -14,10 +14,9 @@ public:
   DarcyVelocity(const InputParameters & parameters);
 
 protected:
-  /// AuxKernels MUST override computeValue(), which is called on every quadrature point by default.
-  /// For nodal Auxiliary variables, it is automatically called on every node instead.
-  ///
-  /// ^^^ need to be more clear about this comment
+  /// AuxKernels MUST override computeValue(), which is called on every Gauss QP for Elemental
+  /// AuxVariables. For nodal AuxVariables, it is called on every node instead and the _qp index
+  /// automatically refers to those nodes.
   virtual RealVectorValue computeValue() override;
 
   /// The gradient of a coupled variable, i.e., pressure

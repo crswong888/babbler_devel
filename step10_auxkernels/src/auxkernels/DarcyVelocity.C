@@ -8,8 +8,11 @@ InputParameters
 DarcyVelocity::validParams()
 {
   InputParameters params = VectorAuxKernel::validParams();
+  params.addClassDescription("Compute volumetric flux (which has units of velocity) for a given "
+                             "pressure gradient, permeability, and viscosity using Darcy's Law: "
+                             "$\\vec{u} = -\\frac{\\mathbf{K}}{\\mu} \\nabla p$");
 
-  // Add a "coupling paramater" to get a variable from the input file.
+  // Required parameter for specifying the MooseVariable to couple to, i.e., pressure
   params.addRequiredCoupledVar("pressure", "The pressure field.");
 
   return params;
@@ -17,16 +20,11 @@ DarcyVelocity::validParams()
 
 DarcyVelocity::DarcyVelocity(const InputParameters & parameters)
   : VectorAuxKernel(parameters),
-
-    // Get the gradient of the variable
     _grad_p(coupledGradient("pressure")),
 
-    // Set reference to the permeability MaterialProperty.
-    // Only AuxKernels operating on Elemental Auxiliary Variables can do this
+    // Note that only AuxKernels operating on Elemental AuxVariables can consume a MaterialProperty
+    // reference, since they are defined at the Gauss QPs within the element
     _permeability(getADMaterialProperty<Real>("permeability")),
-
-    // Set reference to the viscosity MaterialProperty.
-    // Only AuxKernels operating on Elemental Auxiliary Variables can do this
     _viscosity(getADMaterialProperty<Real>("viscosity"))
 {
 }
@@ -34,24 +32,8 @@ DarcyVelocity::DarcyVelocity(const InputParameters & parameters)
 RealVectorValue
 DarcyVelocity::computeValue()
 {
-  // Access the gradient of the pressure at this quadrature point, then pull out the "component" of
-  // it requested (x, y or z). Note, that getting a particular component of a gradient is done using
-  // the parenthesis operator.
-
-  /// note: QPs at {-1, 1} / sqrt(3) in natural coordinates of each element
-  std::cout << std::setprecision(6)
-            << "\n\nFor QP = ("
-            << (_q_point[_qp])(0) << ", "
-            << (_q_point[_qp])(1) << ", "
-            << (_q_point[_qp])(2) << ")\n";
-
-  std::cout << std::setprecision(std::numeric_limits<Real>::digits10)
-            << "K = " << MetaPhysicL::raw_value(_permeability[_qp]) << "\n"
-            << "mu = " << MetaPhysicL::raw_value(_viscosity[_qp]) << "\n"
-            << "K / mu = " << MetaPhysicL::raw_value(_permeability[_qp] / _viscosity[_qp]) << "\n"
-            << "grad_p" << _grad_p[_qp] << "\n"
-            << "K / mu * grad_p"
-            << MetaPhysicL::raw_value(_permeability[_qp] / _viscosity[_qp]) * _grad_p[_qp] << "\n";
-
+  // Access the gradient of the pressure at the QP. The MetaPhysicL::raw_value() method will return
+  // the computed value from an automatically differentiable type, like ADMaterialProperty, as
+  // opposed to any of its gradients WRT to the spatial domain, which is what we want in this case.
   return -MetaPhysicL::raw_value(_permeability[_qp] / _viscosity[_qp]) * _grad_p[_qp];
 }
