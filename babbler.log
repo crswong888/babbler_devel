@@ -31,4 +31,8 @@
   developed material to compute properties of fluid flow through packed steel sphere medium and modified Darcy kernel
 []
 
+[step10_auxkernels]
+  developed auxkernel for computing the velocity associated with a pressure gradient in accordance with Darcy's law
+[]
+
 # Note: tutorial docs could eventually reference this file for all "Commit" sub-steps
