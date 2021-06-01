@@ -81,7 +81,7 @@ git submodule deinit babbler/ -f
 git submodule update --init babbler/
 echo "Entering directory: 'babbler/'"
 cd babbler/
-make clean
+make clean &> /dev/null
 git clean -xdf &> /dev/null
 
 # create a temporary orphan branch and clear the directory - preserve the .git, of course

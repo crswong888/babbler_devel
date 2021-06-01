@@ -17,7 +17,7 @@ function build_and_test {
   fi
 
   echo -n "Running test harness... "
-  ./run_tests -j4 &> /tmp/babbler_devel_out
+  ./run_tests -j4 -p2 &> /tmp/babbler_devel_out
   if [ $? -eq 0 ]; then
     echo "Done."
   else

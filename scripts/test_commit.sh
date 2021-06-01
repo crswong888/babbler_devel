@@ -5,19 +5,20 @@
 # import the build_and_test function
 source ./scripts/build_and_test.sh
 
-dir=$1 # specify the argument as the desired directory for which a Babbler application is stored
-failed=false # initialize variable to track wether compilation, testing, etc., of babbler failed
+if [[ $# == 0 || $# > 1 ]]; then
+  echo "Error: Please specify a valid Babbler application directory."
+  exit 1
+fi
 
+dir=$1 # specify the argument as the desired directory for which a Babbler application is stored
 echo "Entering directory: $dir"
 cd $dir
-make clean
+make clean &> /dev/null
 
 # compile application, run test harness, and run all input files
-build_and_test
-
-echo ""
-if ! $failed; then
-  echo "Testing of Babbler application in $dir completed succesfully."
+if build_and_test; then
+  echo -e "\nTesting of Babbler application in '$dir' completed succesfully."
 else
-  echo "Testing of Babbler application in $dir failed. Please check output for error reports."
+  echo -ne "\nTesting of Babbler application in '$dir' failed. "
+  echo "Please check the output for error reports."
 fi

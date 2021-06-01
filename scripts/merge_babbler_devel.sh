@@ -19,7 +19,7 @@ git submodule deinit babbler/ -f
 git submodule update --init babbler/
 echo "Entering directory: 'babbler/'"
 cd babbler/
-make clean
+make clobber &> /dev/null # we really want to be sure things are clean and fresh here
 git clean -xdf &> /dev/null
 
 # fetch origin remote and check that 'devel' branch exists
@@ -37,7 +37,7 @@ fi
 git checkout --orphan temp
 git reset --hard origin/devel
 
-# assuming 'push_babbler_devel.sh' ran, then every commit has been tested, but test at least HEAD here
+# assuming 'push_babbler_devel.sh' ran then every commit has been tested, but still test HEAD here
 if ! build_and_test; then
   echo "Testing of Babbler application failed. Please check output for error reports."
   exit 1
