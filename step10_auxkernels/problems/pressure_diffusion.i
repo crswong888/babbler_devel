@@ -22,7 +22,7 @@
 [AuxVariables]
   [velocity]
     order = CONSTANT      # Since "pressure" is approximated linearly, its gradient must be constant
-    family = MONOMIAL_VEC # A monomial interpolation means this is an Elemental AuxVariable
+    family = MONOMIAL_VEC # A monomial interpolation means this is an elemental AuxVariable
   []
 []
 

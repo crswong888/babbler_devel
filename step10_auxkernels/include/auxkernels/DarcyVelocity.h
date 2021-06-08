@@ -14,7 +14,7 @@ public:
   DarcyVelocity(const InputParameters & parameters);
 
 protected:
-  /// AuxKernels MUST override computeValue(), which is called on every Gauss QP for Elemental
+  /// AuxKernels MUST override computeValue(), which is called on every Gauss QP for elemental
   /// AuxVariables. For nodal AuxVariables, it is called on every node instead and the _qp index
   /// automatically refers to those nodes.
   virtual RealVectorValue computeValue() override;

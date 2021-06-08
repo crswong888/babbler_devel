@@ -5,7 +5,11 @@
   ny = 10
 []
 
-[Variables/pressure]
+[Variables]
+  [pressure]
+    order = FIRST
+    family = LAGRANGE
+  []
 []
 
 [AuxVariables]
