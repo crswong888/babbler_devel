@@ -166,8 +166,8 @@ for dstdir in step*
 do
   if [ $srcdir == "stork" ] || [ ${dstdir:4:2} -gt ${srcdir:4:2} ]; then
     if [ -n "$(git diff --name-only $dstdir)" ]; then
-      echo -n "Error: There are unstaged changes in the '$dstdir/' directory. Please add or stash "
-      echo    "them before rebasing."
+      echo "Error: There are unstaged changes in the '$dstdir/' directory. Please add or stash "
+      echo "       them before rebasing."
       exit 1
     fi
 
