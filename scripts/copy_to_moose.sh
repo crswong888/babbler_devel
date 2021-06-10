@@ -26,30 +26,30 @@ if [[ "$1" == "-h" || "$1" == "--help" || $# == 0 || $# > 3 ]]; then
     exit 1
 fi
 
-# Modify paths and add forward slash to directory names if not provided
-echo "Entering directory: '../moose/'"
-cd ../moose/
-srcname="${1%/}/"
-srcdir="../babbler_devel/"
-dstname="tutorials/tutorial01_app_development/${1%/}/"
+# modify paths and add forward slash to directory names if not provided
+moosedir="../moose/"
+echo "Entering directory: '$moosedir'"
+cd $moosedir
+srcdir="../babbler_devel/${1%/}/"
+dstdir="tutorials/tutorial01_app_development/${1%/}/"
 
-if [ ! -d $srcdir$srcname ]; then
-  echo "Error: Directory $srcdir$srcname does not exist."
+if [ ! -d $srcdir ]; then
+  echo "Error: Directory $srcdir does not exist."
   exit 1
 fi
 
-if [ -d $dstname ] && ! [[ "$2" == "-f" || "$2" == "--force" || "$3" == "-f" || "$3" == "--force" ]]; then
-  echo "Error: Directory '$dstname' already exists. Use '-f' to overwrite existing files."
+if [ -d $dstdir ] && ! [[ "$2" == "-f" || "$2" == "--force" || "$3" == "-f" || "$3" == "--force" ]]; then
+  echo "Error: Directory '$dstdir' already exists. Use '-f' to overwrite existing files."
   exit 1
-elif [ ! -d $dstname ]; then
-  echo "Creating directory '$dstname'."
-  mkdir $dstname
+elif [ ! -d $dstdir ]; then
+  echo "Creating directory '$dstdir'."
+  mkdir $dstdir
 fi
 
 # check that there aren't any unstaged changes in MOOSE version
-if [ -n "$(git diff --name-only $dstname)" ]; then
-  echo "Error: There are unstaged changes in the '$dstname' directory. Please add or stash them "
-  echo "before overwriting files."
+if [ -n "$(git diff --name-only $dstdir)" ]; then
+  echo "Error: There are unstaged changes in the '$dstdir' directory. Please add or stash them "
+  echo "       before overwriting files."
   exit 1
 fi
 
@@ -59,7 +59,7 @@ if [[ "$2" == "-a" || "$2" == "--add" || "$3" == "-a" || "$3" == "--add" ]]; the
   track=true
 fi
 
-# Function for copying file to a specified destination
+# function for copying file to a specified destination
 function copyfile {
   dstpath="$(dirname $2)"
   if [ ! -d $dstpath ]; then
@@ -68,37 +68,40 @@ function copyfile {
   cp -p $1 $2
 }
 
-# Function for determining wether a file is tracked by Git or not
-function gitstatus {
-  status=1
-  if [ -d $1 ]; then
-    # consider directories as tracked so all files don't just get added willy-nilly
-    status=0
+# function for tracking or staging changes to a file - only adds files not already staged
+function gitadd {
+  if [ ! -d $1 ] && [ -z "$(git diff --name-only --cached -- $1)" ]; then
+    git add $1
   else
-    # check if file is already being tracked to avoid overwriting those changes
-    if [ -n "$(git diff --name-only --cached $1)" ]; then
-      status=0
-    fi
+    echo -e "\nWarning: File '$1' is already staged for commit so changes weren't tracked."
   fi
-  return $status
 }
 
-echo "Copying files tracked by Git from '$srcdir$srcname' to '$dstname'... "
-for file in $(cd $srcdir && git ls-files $srcname)
+echo -n "Copying tracked files from '$srcdir' to '$dstdir'... "
+for file in $(cd $srcdir && git ls-files)
 do
-  dst=$dstname${file#$srcname}
+  dst=$dstdir$file
   copyfile $srcdir$file $dst
 
-  # only add new untracked files to preserve any previously staged changes
   if $track; then
-    if ! gitstatus $dst; then
-      git add $dst
-    else
-      echo -e "File '$dst' is already staged for commit so changes were left untracked."
+    gitadd $dst
+  fi
+done
+echo "Done."
+
+echo -n "Deleting tracked files in '$dstdir' not in '$srcdir'..."
+for file in $(cd $dstdir && git ls-files)
+do
+  if [ ! -f $srcdir$file ]; then
+    dst=$dstdir$file
+    rm $dst
+
+    if $track; then
+      gitadd $dst
     fi
   fi
 done
 echo "Done."
 
-echo -e "Checking git status in '../moose/':\n"
+echo -e "Checking git status in '$moosedir':\n"
 git status
