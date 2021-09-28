@@ -102,7 +102,7 @@ else
 
   # print out and revert changes
   sed "${squelch%|})/d" $tmp/out
-  git checkout stork*
+  git restore stork*
   git clean stork/ -f
 fi
 

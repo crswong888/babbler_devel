@@ -70,7 +70,7 @@ function copyfile {
 
 # function for tracking or staging changes to a file - only adds files not already staged
 function gitadd {
-  if [ ! -d $1 ] && [ -z "$(git diff --name-only --cached -- $1)" ]; then
+  if [ ! -d $1 ] && [ -z "$(git diff --name-only --staged -- $1)" ]; then
     git add $1
   else
     echo -e "\nWarning: File '$1' is already staged for commit so changes weren't tracked."
